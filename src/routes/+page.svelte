@@ -76,7 +76,8 @@
     let selectedFontFamily = $state('Pretendard, sans-serif');
     let customFontInput = $state('');
     let editorElement = $state(null);
-    let editor = $state(null);
+    let editor;
+    let editorReady = $state(false);
     let thumbnailRef = $state(null);
     let fileInputRef = $state(null);
     let jsonFileInputRef = $state(null); // JSON 파일 업로드용 참조
@@ -109,27 +110,43 @@
             editor.getAttributes('fontSize').size ||
             editor.getAttributes('textStyle').size;
 
+        let nextFontSize = 'default';
+
         if (fontSizeAttr) {
-            selectedFontSize = fontSizeAttr;
+            nextFontSize = fontSizeAttr;
         } else {
             const activeMarks = editor.state.selection.$from.marks();
+
             const fontSizeMark = activeMarks.find(
-                m => m.type.name === 'fontSize' || m.attrs.size
+                mark => mark.type.name === 'fontSize' || mark.attrs.size
             );
 
-            selectedFontSize = fontSizeMark?.attrs?.size || 'default';
+            nextFontSize = fontSizeMark?.attrs?.size || 'default';
         }
 
-        const textColor = editor.getAttributes('textStyle').color;
-        currentColor = textColor || '#000000';
+        const nextColor =
+            editor.getAttributes('textStyle').color || '#000000';
 
-        const highlightColor = editor.getAttributes('highlight').color;
-        currentBgColor = highlightColor || '#ffec3d';
+        const nextBgColor =
+            editor.getAttributes('highlight').color || '#ffec3d';
+
+        if (selectedFontSize !== nextFontSize) {
+            selectedFontSize = nextFontSize;
+        }
+
+        if (currentColor !== nextColor) {
+            currentColor = nextColor;
+        }
+
+        if (currentBgColor !== nextBgColor) {
+            currentBgColor = nextBgColor;
+        }
     }
 
     onMount(() => {
         editor = new Editor({
             element: editorElement,
+
             extensions: [
                 StarterKit,
                 TextStyle,
@@ -137,15 +154,24 @@
                 Color,
                 Highlight.configure({ multicolor: true })
             ],
-            content: `<p>${year}. ${month}. ${date}.</p>`,
-            onTransaction: () => {
-                editor = editor;
-                updateToolbarState(); 
+
+            parseOptions: {
+                preserveWhitespace: 'full'
             },
+
+            content: `<p>${year}. ${month}. ${date}.</p>`,
+
+            onTransaction: () => {
+                updateToolbarState();
+                editorReady = true;
+            },
+
             onSelectionUpdate: () => {
                 updateToolbarState();
             }
         });
+
+        editorReady = true;
     });
 
     onDestroy(() => {
@@ -369,7 +395,7 @@ async function downloadThumbnail() {
 
 <main>
     <!-- Tiptap 서식 툴바 -->
-    {#if editor}
+    {#if editorReady}
         <div class="toolbar">
             <button 
                 type="button"
@@ -732,7 +758,7 @@ main {
     outline: none;
     overflow: visible;
     overflow-anchor: none;
-    white-space: nowrap;
+    white-space: pre-wrap;
 }
 .in-thumbnail-text :global(.ProseMirror p) {
     margin: 0;
