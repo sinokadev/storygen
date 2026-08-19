@@ -69,6 +69,7 @@
     let thumbnailBgImage = $state(''); // 썸네일 배경 이미지 (Data URL)
     let isDraggingOver = $state(false); // 드래그 앤 드롭 상태 감지
     let selectedFontSize = $state('default');
+    let thumbnailTextColor = $state('#000000');
     
     // 폰트 관련 상태
     let selectedFontFamily = $state('Pretendard, sans-serif');
@@ -102,13 +103,19 @@
     // 선택된 커서/영역의 스타일 상태를 툴바 UI에 동기화
     function updateToolbarState() {
         if (!editor) return;
-        const fontSizeAttr = editor.getAttributes('fontSize').size 
-                          || editor.getAttributes('textStyle').size;
+
+        const fontSizeAttr =
+            editor.getAttributes('fontSize').size ||
+            editor.getAttributes('textStyle').size;
+
         if (fontSizeAttr) {
             selectedFontSize = fontSizeAttr;
         } else {
             const activeMarks = editor.state.selection.$from.marks();
-            const fontSizeMark = activeMarks.find(m => m.type.name === 'fontSize' || m.attrs.size);
+            const fontSizeMark = activeMarks.find(
+                m => m.type.name === 'fontSize' || m.attrs.size
+            );
+
             selectedFontSize = fontSizeMark?.attrs?.size || 'default';
         }
 
@@ -344,7 +351,7 @@
 
 <header>
     <h1>섬네일 생성기</h1>
-    <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p><br>
+    <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p>
     <p>텍스트를 클릭하여 텍스트를 수정할 수 있습니다.</p>
 </header>
 
@@ -444,10 +451,14 @@
             background-color: {thumbnailBgColor};
             background-image: {thumbnailBgImage ? `url(${thumbnailBgImage})` : 'none'};
         ">
-        <div 
-            class="in-thumbnail-text" 
+        <div
+            class="in-thumbnail-text"
             bind:this={editorElement}
-            style="font-family: {selectedFontFamily};">
+            style="
+                font-family: {selectedFontFamily};
+                color: {thumbnailTextColor};
+            "
+        >
         </div>
         {#if isDraggingOver}
             <div class="drag-overlay">이미지를 여기에 놓으세요</div>
@@ -843,8 +854,6 @@ main {
 footer {
     margin-top: 2rem !important;
     padding: 4rem 1.5rem !important;
-    background: var(--text-color) !important;
-    color: var(--bg-color) !important;
     line-height: 1.8;
 }
 
