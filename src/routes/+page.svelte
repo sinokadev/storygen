@@ -382,11 +382,19 @@
     }
 
     // 썸네일 이미지 다운로드
+// 썸네일 이미지 다운로드
     async function downloadThumbnail() {
-        if (!thumbnailRef) return;
+        if (!thumbnailRef || !editorElement) return;
+
+        // 원래 transform 상태 저장
+        const originalTransform = editorElement.style.transform;
 
         try {
             await document.fonts.ready;
+
+            // 캡처 전에 텍스트 요소를 위로 200px 이동 (Scale 계산 고려)
+            // 요소의 스케일 비율에 영향받지 않도록 Y축 오프셋 적용
+            editorElement.style.transform = 'translateY(-12px)';
 
             const currentWidth = thumbnailRef.offsetWidth;
             const currentHeight = thumbnailRef.offsetHeight;
@@ -420,6 +428,9 @@
 
         } catch (err) {
             console.error('캡처 중 오류가 발생했습니다:', err);
+        } finally {
+            // 캡처 완료 또는 에러 발생 후 원래 위치로 스타일 복원
+            editorElement.style.transform = originalTransform;
         }
     }
 </script>
