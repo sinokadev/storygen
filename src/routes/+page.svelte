@@ -268,13 +268,24 @@
         if (!thumbnailRef) return;
 
         try {
-            const dataUrl = await toPng(thumbnailRef, { 
+            const dataUrl = await toPng(thumbnailRef, {
                 cacheBust: true,
+
+                // 최종 다운로드 이미지 해상도
+                width: 1920,
+                height: 1080,
+
+                // 원본 요소의 실제 크기를 기준으로 1920x1080으로 스케일링
+                canvasWidth: 1920,
+                canvasHeight: 1080,
+
                 style: {
+                    width: '1920px',
+                    height: '1080px',
                     borderColor: 'transparent'
                 }
             });
-            
+
             const link = document.createElement('a');
             link.download = `thumbnail-${Date.now()}.png`;
             link.href = dataUrl;
