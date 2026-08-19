@@ -56,8 +56,10 @@
     // 날짜 기본값 세팅
     let today = new Date();   
     let year = today.getFullYear();
-    let month = today.getMonth() + 1;
-    let date = today.getDate();
+
+    // padStart(최종길이, 채울문자) 사용
+    let month = String(today.getMonth() + 1).padStart(2, '0');
+    let date = String(today.getDate()).padStart(2, '0');
 
     // 상태 관리 (Svelte 5 Runes)
     let position = $state('center-center');
