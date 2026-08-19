@@ -697,8 +697,6 @@ main {
     place-items: center;
     place-content: center;
     overflow: hidden;
-    border: 2px solid var(--text-color);
-    border-radius: var(--border-radius);
     background-color: #fff;
     background-size: cover;
     background-position: center;
