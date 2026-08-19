@@ -10,13 +10,11 @@
     // 1. 커스텀 FontSize Mark Extension 정의
     const FontSize = Mark.create({
         name: 'fontSize',
-
         addOptions() {
             return {
                 types: ['textStyle'],
             };
         },
-
         addAttributes() {
             return {
                 size: {
@@ -33,7 +31,6 @@
                 },
             };
         },
-
         parseHTML() {
             return [
                 {
@@ -41,11 +38,9 @@
                 },
             ];
         },
-
         renderHTML({ HTMLAttributes }) {
             return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
         },
-
         addCommands() {
             return {
                 setFontSize: size => ({ chain }) => {
@@ -76,11 +71,11 @@
     // 폰트 관련 상태
     let selectedFontFamily = $state('Pretendard, sans-serif');
     let customFontInput = $state('');
-
     let editorElement = $state(null);
     let editor = $state(null);
     let thumbnailRef = $state(null);
     let fileInputRef = $state(null);
+    let jsonFileInputRef = $state(null); // JSON 파일 업로드용 참조
 
     // 프리셋 폰트 목록
     const fontPresets = [
@@ -105,10 +100,8 @@
     // 선택된 커서/영역의 스타일 상태를 툴바 UI에 동기화
     function updateToolbarState() {
         if (!editor) return;
-
         const fontSizeAttr = editor.getAttributes('fontSize').size 
                           || editor.getAttributes('textStyle').size;
-
         if (fontSizeAttr) {
             selectedFontSize = fontSizeAttr;
         } else {
@@ -155,11 +148,9 @@
     function toggleBold() {
         editor?.chain().focus().toggleBold().run();
     }
-
     function toggleItalic() {
         editor?.chain().focus().toggleItalic().run();
     }
-
     function toggleStrike() {
         editor?.chain().focus().toggleStrike().run();
     }
@@ -183,7 +174,6 @@
     function changeFontSize(e) {
         const size = e.target.value;
         selectedFontSize = size;
-
         if (size === 'default') {
             editor?.chain().focus().unsetFontSize().run();
         } else {
@@ -220,7 +210,6 @@
     // 이미지 파일을 읽어서 Data URL로 로드하는 공통 함수
     function processImageFile(file) {
         if (!file || !file.type.startsWith('image/')) return;
-
         const reader = new FileReader();
         reader.onload = () => {
             if (typeof reader.result === 'string') {
@@ -250,7 +239,6 @@
     function handleDrop(e) {
         e.preventDefault();
         isDraggingOver = false;
-
         const file = e.dataTransfer?.files?.[0];
         processImageFile(file);
     }
@@ -263,6 +251,67 @@
         }
     }
 
+    // ==========================================
+    // JSON 데이터 저장 (내보내기) 기능
+    // ==========================================
+    function exportJson() {
+        if (!editor) return;
+
+        const thumbnailData = {
+            version: 1,
+            position,
+            thumbnailBgColor,
+            thumbnailBgImage,
+            selectedFontFamily,
+            customFontInput,
+            editorContent: editor.getJSON() // Tiptap 내부 문단/서식 데이터를 JSON 구조로 추출
+        };
+
+        const jsonString = JSON.stringify(thumbnailData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thumbnail-preset-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ==========================================
+    // JSON 데이터 불러오기 (적용) 기능
+    // ==========================================
+    function importJson(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+
+                // 상태 데이터 복원
+                position = data.position || 'center-center';
+                thumbnailBgColor = data.thumbnailBgColor || '#ffffff';
+                thumbnailBgImage = data.thumbnailBgImage || '';
+                selectedFontFamily = data.selectedFontFamily || 'Pretendard, sans-serif';
+                customFontInput = data.customFontInput || '';
+
+                // Tiptap 에디터 내용/서식 데이터 복원
+                if (data.editorContent && editor) {
+                    editor.commands.setContent(data.editorContent);
+                }
+            } catch (err) {
+                alert('올바른 JSON 파일이 아닙니다.');
+                console.error('JSON 로드 중 오류 발생:', err);
+            } finally {
+                // 동일 파일 재업로드를 위해 input 비우기
+                if (jsonFileInputRef) jsonFileInputRef.value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
     // 썸네일 이미지 다운로드
     async function downloadThumbnail() {
         if (!thumbnailRef) return;
@@ -270,15 +319,10 @@
         try {
             const dataUrl = await toPng(thumbnailRef, {
                 cacheBust: true,
-
-                // 최종 다운로드 이미지 해상도
                 width: 1920,
                 height: 1080,
-
-                // 원본 요소의 실제 크기를 기준으로 1920x1080으로 스케일링
                 canvasWidth: 1920,
                 canvasHeight: 1080,
-
                 style: {
                     width: '1920px',
                     height: '1080px',
@@ -296,12 +340,10 @@
     }
 </script>
 
-
-  <header>
+<header>
     <h1>섬네일 생성기</h1>
     <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p>
-    
-  </header>
+</header>
 
 <main>
     <!-- Tiptap 서식 툴바 -->
@@ -314,7 +356,6 @@
                 title="굵게">
                 <b>B</b>
             </button>
-
             <button 
                 type="button"
                 class:active={editor.isActive('italic')} 
@@ -322,7 +363,6 @@
                 title="기울임꼴">
                 <i>I</i>
             </button>
-
             <button 
                 type="button"
                 class:active={editor.isActive('strike')} 
@@ -410,7 +450,6 @@
             <div class="drag-overlay">이미지를 여기에 놓으세요</div>
         {/if}
     </div>
-
     <br>
 
     <!-- 배경 이미지 제어 컨트롤 (툴바 외부) -->
@@ -426,7 +465,6 @@
         <label for="bg-file-input" class="bg-btn add-bg-btn">
             🖼️ 배경 이미지 추가
         </label>
-
         {#if thumbnailBgImage}
             <button type="button" onclick={removeBgImage} class="bg-btn remove-bg-btn">
                 🗑️ 배경 이미지 제거
@@ -436,25 +474,41 @@
     <br>
 
     <!-- 정렬 컨트롤 -->
-<div class="position-control">
-    <p>텍스트 정렬</p>
-
-    <div id="position-select">
-        <input type="radio" bind:group={position} value="top-left" />
-        <input type="radio" bind:group={position} value="top-center" />
-        <input type="radio" bind:group={position} value="top-right" />
-
-        <input type="radio" bind:group={position} value="center-left" />
-        <input type="radio" bind:group={position} value="center-center" />
-        <input type="radio" bind:group={position} value="center-right" />
-
-        <input type="radio" bind:group={position} value="bottom-left" />
-        <input type="radio" bind:group={position} value="bottom-center" />
-        <input type="radio" bind:group={position} value="bottom-right" />
+    <div class="position-control">
+        <p>텍스트 정렬</p>
+        <div id="position-select">
+            <input type="radio" bind:group={position} value="top-left" />
+            <input type="radio" bind:group={position} value="top-center" />
+            <input type="radio" bind:group={position} value="top-right" />
+            <input type="radio" bind:group={position} value="center-left" />
+            <input type="radio" bind:group={position} value="center-center" />
+            <input type="radio" bind:group={position} value="center-right" />
+            <input type="radio" bind:group={position} value="bottom-left" />
+            <input type="radio" bind:group={position} value="bottom-center" />
+            <input type="radio" bind:group={position} value="bottom-right" />
+        </div>
     </div>
-</div>
+    <br>
 
-<br>
+    <!-- JSON 저장 및 불러오기 버튼 컨트롤 추가 -->
+    <div class="json-controls">
+        <button type="button" class="json-btn export-btn" onclick={exportJson}>
+            💾 설정 JSON 저장
+        </button>
+
+        <input 
+            type="file" 
+            accept=".json" 
+            bind:this={jsonFileInputRef} 
+            onchange={importJson} 
+            id="json-file-input" 
+            class="hidden-file-input" />
+
+        <label for="json-file-input" class="json-btn import-btn">
+            📂 설정 JSON 불러오기
+        </label>
+    </div>
+
     <button type="button" class="download-btn" onclick={downloadThumbnail}>
         섬네일 다운로드
     </button>
@@ -467,472 +521,344 @@
 </footer>
 
 <style>
+/* ================================
+   JSON 컨트롤 스타일 추가
+   ================================ */
+.json-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.json-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    background: var(--box-bg-color);
+    color: var(--text-color);
+    border: var(--border);
+    border-radius: var(--border-radius);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+.json-btn:hover {
+    background: var(--button-bg-color);
+}
+
 :global(*) {
     box-sizing: border-box;
 }
-
-
 /* ================================
    Header
    ================================ */
-
 header {
     max-width: 820px;
     margin: 0 auto;
     padding: 3rem 1.5rem 1.5rem;
 }
-
 header h1 {
     margin: 0;
     letter-spacing: -0.04em;
 }
-
 header p {
     margin-top: 0.75rem;
     color: var(--gray);
     line-height: 1.7;
 }
-
-
 /* ================================
    Main
    ================================ */
-
 main {
     width: min(100%, 820px);
     padding: 0 1.5rem 3rem;
 }
-
-
 /* ================================
    Toolbar
    ================================ */
-
 .toolbar {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
-
     width: 100%;
     padding: 8px;
-
     background: var(--box-bg-color);
     border: var(--border);
     border-radius: var(--border-radius);
 }
-
-
-/* nokull 기본 버튼/입력 스타일을
-   툴바 안에서 조금 작게 */
-
 .toolbar button,
 .toolbar select,
 .custom-font-input {
     height: 34px;
     margin: 0;
-
     font-family: inherit;
     font-size: 0.875rem;
 }
-
-
-/* 버튼 */
-
 .toolbar button {
     min-width: 34px;
     padding: 0 0.7rem;
 }
-
 .toolbar button.active {
     background: var(--bg-color);
     border-color: rgba(0, 0, 0, 0.3);
 }
-
-
-/* select */
-
 .toolbar select {
     width: auto;
     padding: 0 2rem 0 0.7rem;
 }
-
 .font-select {
     max-width: 165px;
 }
-
 .font-size-select {
     max-width: 125px;
 }
-
-
-/* 직접 입력 */
-
 .custom-font-input {
     width: 145px !important;
     padding: 0 0.7rem !important;
     margin-top: 0 !important;
 }
-
-
 /* ================================
    Color Picker
    ================================ */
-
 .color-picker-label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-
     width: 42px;
     height: 34px;
     padding: 0;
-
     background: var(--button-bg-color);
     border: var(--border);
     border-radius: var(--border-radius);
-
     cursor: pointer;
 }
-
 .color-picker-label input[type="color"] {
     width: 18px;
     height: 18px;
-
     padding: 0;
     margin: 0;
-
     border: 0;
     border-radius: 50%;
-
     background: transparent;
     cursor: pointer;
-
     appearance: none;
     -webkit-appearance: none;
 }
-
 .color-picker-label input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 0;
 }
-
 .color-picker-label input[type="color"]::-webkit-color-swatch {
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 50%;
 }
-
-
-/* 초기화 버튼 */
-
 .clear-btn {
     margin-left: auto !important;
 }
-
-
 /* ================================
    Thumbnail
    ================================ */
-
 #thumbnail {
     position: relative;
-
     width: 100%;
     aspect-ratio: 16 / 9;
-
     margin-top: 12px;
     padding: 2em;
-
     display: grid;
     place-items: center;
     place-content: center;
-
     overflow: hidden;
-
     border: 2px solid var(--text-color);
     border-radius: var(--border-radius);
-
     background-color: #fff;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
-
-
-/* Drag & Drop */
-
 #thumbnail.drag-over {
     border-style: dashed;
 }
-
 .drag-overlay {
     position: absolute;
     inset: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     background: rgba(245, 245, 245, 0.85);
-
     color: var(--text-color);
-
     font-size: 1.1rem;
     font-weight: 600;
-
     pointer-events: none;
 }
-
-
 /* ================================
    Tiptap
    ================================ */
-
 .in-thumbnail-text {
     width: max-content;
     max-width: 100%;
     height: max-content;
-
     color: inherit;
-
     font-size: 2.5rem;
 }
-
 .in-thumbnail-text :global(.ProseMirror) {
     outline: none;
     overflow: hidden;
     overflow-anchor: none;
 }
-
 .in-thumbnail-text :global(.ProseMirror p) {
     margin: 0;
     line-height: 1.2;
 }
-
-
 /* ================================
    Background Image Controls
    ================================ */
-
 .bg-image-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-
     width: 100%;
     margin-top: 4px;
 }
-
 .hidden-file-input {
     display: none;
 }
-
 .bg-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     padding: 0.55rem 0.9rem;
-
     background: var(--button-bg-color);
     color: var(--text-color);
-
     border: var(--border);
     border-radius: var(--border-radius);
-
     font-family: inherit;
     font-size: 0.875rem;
     font-weight: 500;
-
     cursor: pointer;
 }
-
 .remove-bg-btn {
     color: var(--text-color);
 }
-
-
 /* ================================
    Position Selector
    ================================ */
-
 .position-control {
     width: 100%;
     margin-top: 0.5rem;
 }
-
 .position-control > p {
     margin: 0 0 0.5rem;
-
     color: var(--gray);
-
     font-size: 0.875rem;
     font-weight: 600;
 }
-
 #position-select {
     display: grid;
-
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-
     width: 100px;
     height: 100px;
-
     gap: 4px;
-
     padding: 4px;
-
     background: var(--box-bg-color);
     border: var(--border);
     border-radius: var(--border-radius);
 }
-
 #position-select input[type="radio"] {
     appearance: none;
     -webkit-appearance: none;
-
     width: auto;
     height: auto;
-
     margin: 0;
-
     background: var(--bg-color);
     border: var(--border);
     border-radius: 4px;
-
     cursor: pointer;
 }
-
 #position-select input[type="radio"]:checked {
     background: var(--text-color);
     border-color: var(--text-color);
 }
-
-
 /* ================================
    Position
    ================================ */
-
-#thumbnail.top-left {
-    place-content: start start;
-}
-
-#thumbnail.top-center {
-    place-content: start center;
-}
-
-#thumbnail.top-right {
-    place-content: start end;
-}
-
-#thumbnail.center-left {
-    place-content: center start;
-}
-
-#thumbnail.center-center {
-    place-content: center center;
-}
-
-#thumbnail.center-right {
-    place-content: center end;
-}
-
-#thumbnail.bottom-left {
-    place-content: end start;
-}
-
-#thumbnail.bottom-center {
-    place-content: end center;
-}
-
-#thumbnail.bottom-right {
-    place-content: end end;
-}
-
+#thumbnail.top-left { place-content: start start; }
+#thumbnail.top-center { place-content: start center; }
+#thumbnail.top-right { place-content: start end; }
+#thumbnail.center-left { place-content: center start; }
+#thumbnail.center-center { place-content: center center; }
+#thumbnail.center-right { place-content: center end; }
+#thumbnail.bottom-left { place-content: end start; }
+#thumbnail.bottom-center { place-content: end center; }
+#thumbnail.bottom-right { place-content: end end; }
 
 /* ================================
    Text Alignment
    ================================ */
-
 #thumbnail.top-left .in-thumbnail-text,
 #thumbnail.center-left .in-thumbnail-text,
 #thumbnail.bottom-left .in-thumbnail-text {
     text-align: left;
 }
-
 #thumbnail.top-center .in-thumbnail-text,
 #thumbnail.center-center .in-thumbnail-text,
 #thumbnail.bottom-center .in-thumbnail-text {
     text-align: center;
 }
-
 #thumbnail.top-right .in-thumbnail-text,
 #thumbnail.center-right .in-thumbnail-text,
 #thumbnail.bottom-right .in-thumbnail-text {
     text-align: right;
 }
 
-
 /* ================================
    Download
    ================================ */
-
 .download-btn {
     width: 100%;
-
     margin-top: 12px;
-
     background: var(--button-bg-color);
     color: var(--text-color);
-
     border: var(--border);
     border-bottom: 4px solid rgba(0, 0, 0, 0.2);
     border-radius: var(--border-radius);
-
     font-family: inherit;
     font-size: 1rem;
     font-weight: 600;
 }
-
 .download-btn:hover {
     background: var(--box-bg-color);
 }
 
-
 /* ================================
    Footer
    ================================ */
-
 footer {
     margin-top: 2rem !important;
     padding: 4rem 1.5rem !important;
-
     background: var(--text-color) !important;
     color: var(--bg-color) !important;
-
     line-height: 1.8;
 }
-
 
 /* ================================
    Mobile
    ================================ */
-
 @media (max-width: 600px) {
     header {
         padding-top: 2rem;
     }
-
     main {
         padding-left: 1rem;
         padding-right: 1rem;
     }
-
     .toolbar {
         gap: 5px;
     }
-
     .font-select,
     .font-size-select,
     .custom-font-input {
@@ -940,19 +866,15 @@ footer {
         width: auto !important;
         max-width: none;
     }
-
     .clear-btn {
         margin-left: 0 !important;
     }
-
     .color-picker-label {
         flex: 1;
     }
-
     #thumbnail {
         padding: 1.25rem;
     }
-
     .in-thumbnail-text {
         font-size: 2rem;
     }
