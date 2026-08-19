@@ -75,6 +75,15 @@
     // 폰트 관련 상태
     let selectedFontFamily = $state('Pretendard, sans-serif');
     let customFontInput = $state('');
+
+    // 그림자(Text Shadow) 관련 상태
+    let hasShadow = $state(true);
+    let shadowColor = $state('#000000');
+    let shadowOpacity = $state(0.8); // 그림자 불투명도 (0 ~ 1)
+    let shadowBlur = $state(4); // px 단위
+    let shadowOffsetX = $state(2); // X축 오프셋 (px)
+    let shadowOffsetY = $state(2); // Y축 오프셋 (px)
+
     let editorElement = $state(null);
     let editor;
     let editorReady = $state(false);
@@ -101,6 +110,19 @@
         '0.75rem', '0.875rem', '1rem', '1.25rem', '1.5rem', 
         '1.75rem', '2rem', '2.5rem', '3rem', '3.5rem', '4rem', '5rem', '6rem'
     ];
+
+    // Hex 색상과 Opacity 값을 이용해 rgba 스트링 반환하는 파생 함수/유틸리티
+    function getShadowColorWithAlpha(hex, opacity) {
+        let c = hex.replace('#', '');
+        if (c.length === 3) {
+            c = c.split('').map(char => char + char).join('');
+        }
+        const num = parseInt(c, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
 
     // 선택된 커서/영역의 스타일 상태를 툴바 UI에 동기화
     function updateToolbarState() {
@@ -300,7 +322,13 @@
             thumbnailBgImage,
             selectedFontFamily,
             customFontInput,
-            editorContent: editor.getJSON() // Tiptap 내부 문단/서식 데이터를 JSON 구조로 추출
+            hasShadow,
+            shadowColor,
+            shadowOpacity,
+            shadowBlur,
+            shadowOffsetX,
+            shadowOffsetY,
+            editorContent: editor.getJSON()
         };
 
         const jsonString = JSON.stringify(thumbnailData, null, 2);
@@ -332,6 +360,12 @@
                 thumbnailBgImage = data.thumbnailBgImage || '';
                 selectedFontFamily = data.selectedFontFamily || 'Pretendard, sans-serif';
                 customFontInput = data.customFontInput || '';
+                hasShadow = data.hasShadow ?? true;
+                shadowColor = data.shadowColor || '#000000';
+                shadowOpacity = data.shadowOpacity ?? 0.8;
+                shadowBlur = data.shadowBlur ?? 4;
+                shadowOffsetX = data.shadowOffsetX ?? 2;
+                shadowOffsetY = data.shadowOffsetY ?? 2;
 
                 // Tiptap 에디터 내용/서식 데이터 복원
                 if (data.editorContent && editor) {
@@ -341,7 +375,6 @@
                 alert('올바른 JSON 파일이 아닙니다.');
                 console.error('JSON 로드 중 오류 발생:', err);
             } finally {
-                // 동일 파일 재업로드를 위해 input 비우기
                 if (jsonFileInputRef) jsonFileInputRef.value = '';
             }
         };
@@ -349,42 +382,41 @@
     }
 
     // 썸네일 이미지 다운로드
-async function downloadThumbnail() {
-    if (!thumbnailRef) return;
+    async function downloadThumbnail() {
+        if (!thumbnailRef) return;
 
-    try {
-        const targetWidth = 1920;
-        const targetHeight = 1080;
+        try {
+            const targetWidth = 1920;
+            const targetHeight = 1080;
 
-        const currentWidth = thumbnailRef.offsetWidth;
+            const currentWidth = thumbnailRef.offsetWidth;
 
-        // 16:9이므로 하나의 scale만 사용
-        const scale = targetWidth / currentWidth;
+            const scale = targetWidth / currentWidth;
 
-        const dataUrl = await toPng(thumbnailRef, {
-            cacheBust: true,
-            width: targetWidth,
-            height: targetHeight,
-            canvasWidth: targetWidth,
-            canvasHeight: targetHeight,
+            const dataUrl = await toPng(thumbnailRef, {
+                cacheBust: true,
+                width: targetWidth,
+                height: targetHeight,
+                canvasWidth: targetWidth,
+                canvasHeight: targetHeight,
 
-            style: {
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-                width: `${currentWidth}px`,
-                height: `${thumbnailRef.offsetHeight}px`,
-                overflow: 'visible'
-            }
-        });
+                style: {
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                    width: `${currentWidth}px`,
+                    height: `${thumbnailRef.offsetHeight}px`,
+                    overflow: 'visible'
+                }
+            });
 
-        const link = document.createElement('a');
-        link.download = `thumbnail-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-    } catch (err) {
-        console.error('캡처 중 오류가 발생했습니다:', err);
+            const link = document.createElement('a');
+            link.download = `thumbnail-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error('캡처 중 오류가 발생했습니다:', err);
+        }
     }
-}
 </script>
 
 <header>
@@ -470,6 +502,62 @@ async function downloadThumbnail() {
                     oninput={changeThumbnailBg} />
             </label>
 
+            <!-- 텍스트 그림자 컨트롤 (색상, 투명도, 번짐, X/Y 오프셋 설정) -->
+            <div class="shadow-controls-group">
+                <button 
+                    type="button" 
+                    class:active={hasShadow}
+                    onclick={() => hasShadow = !hasShadow}
+                    title="텍스트 그림자 토글">
+                    ✨
+                </button>
+                {#if hasShadow}
+                    <label class="color-picker-label" title="그림자 색상">
+                        🌑
+                        <input 
+                            type="color" 
+                            bind:value={shadowColor} />
+                    </label>
+                    <label class="shadow-range-label" title="그림자 투명도 (Opacity)">
+                        <span>Opacity</span>
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="1" 
+                            step="0.05"
+                            bind:value={shadowOpacity} 
+                            class="shadow-range" style="cursor: pointer;"/>
+                    </label>
+                    <label class="shadow-range-label" title="그림자 번짐(Blur)">
+                        <span>Blur</span>
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="20" 
+                            bind:value={shadowBlur} 
+                            class="shadow-range" style="cursor: pointer;"/>
+                    </label>
+                    <label class="shadow-range-label" title="그림자 가로 위치 (X Offset)">
+                        <span>X</span>
+                        <input 
+                            type="input" 
+                            min="-30" 
+                            max="30" 
+                            bind:value={shadowOffsetX} 
+                            class="shadow-range" />
+                    </label>
+                    <label class="shadow-range-label" title="그림자 세로 위치 (Y Offset)">
+                        <span>Y</span>
+                        <input 
+                            type="input" 
+                            min="-30" 
+                            max="30" 
+                            bind:value={shadowOffsetY} 
+                            class="shadow-range" />
+                    </label>
+                {/if}
+            </div>
+
             <button type="button" onclick={clearFormatting} title="서식 초기화" class="clear-btn">
                 🧹
             </button>
@@ -495,6 +583,7 @@ async function downloadThumbnail() {
             style="
                 font-family: {selectedFontFamily};
                 color: {thumbnailTextColor};
+                text-shadow: {hasShadow ? `${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px ${getShadowColorWithAlpha(shadowColor, shadowOpacity)}` : 'none'};
             "
         >
         </div>
@@ -504,7 +593,7 @@ async function downloadThumbnail() {
     </div>
     <br>
 
-    <!-- 배경 이미지 제어 컨트롤 (툴바 외부) -->
+    <!-- 배경 이미지 제어 컨트롤 -->
     <div class="bg-image-controls">
         <input 
             type="file" 
@@ -542,7 +631,7 @@ async function downloadThumbnail() {
     </div>
     <br>
 
-    <!-- JSON 저장 및 불러오기 버튼 컨트롤 추가 -->
+    <!-- JSON 저장 및 불러오기 버튼 컨트롤 -->
     <div class="json-controls">
         <button type="button" class="json-btn export-btn" onclick={exportJson}>
             💾 설정 JSON 저장
@@ -574,7 +663,27 @@ async function downloadThumbnail() {
 
 <style>
 /* ================================
-   JSON 컨트롤 스타일 추가
+   Shadow Controls
+   ================================ */
+.shadow-controls-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.shadow-range-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    color: var(--gray);
+}
+.shadow-range {
+    width: 50px;
+    height: 34px;
+}
+
+/* ================================
+   JSON 컨트롤 스타일
    ================================ */
 .json-controls {
     display: flex;
