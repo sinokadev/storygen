@@ -344,7 +344,8 @@
 
 <header>
     <h1>섬네일 생성기</h1>
-    <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p>
+    <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p><br>
+    <p>텍스트를 클릭하여 텍스트를 수정할 수 있습니다.</p>
 </header>
 
 <main>
