@@ -322,31 +322,42 @@
     }
 
     // 썸네일 이미지 다운로드
-    async function downloadThumbnail() {
-        if (!thumbnailRef) return;
+async function downloadThumbnail() {
+    if (!thumbnailRef) return;
 
-        try {
-            const dataUrl = await toPng(thumbnailRef, {
-                cacheBust: true,
-                width: 1920,
-                height: 1080,
-                canvasWidth: 1920,
-                canvasHeight: 1080,
-                style: {
-                    width: '1920px',
-                    height: '1080px',
-                    borderColor: 'transparent'
-                }
-            });
+    try {
+        const targetWidth = 1920;
+        const targetHeight = 1080;
 
-            const link = document.createElement('a');
-            link.download = `thumbnail-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (err) {
-            console.error('캡처 중 오류가 발생했습니다:', err);
-        }
+        const currentWidth = thumbnailRef.offsetWidth;
+
+        // 16:9이므로 하나의 scale만 사용
+        const scale = targetWidth / currentWidth;
+
+        const dataUrl = await toPng(thumbnailRef, {
+            cacheBust: true,
+            width: targetWidth,
+            height: targetHeight,
+            canvasWidth: targetWidth,
+            canvasHeight: targetHeight,
+
+            style: {
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+                width: `${currentWidth}px`,
+                height: `${thumbnailRef.offsetHeight}px`,
+                overflow: 'visible'
+            }
+        });
+
+        const link = document.createElement('a');
+        link.download = `thumbnail-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+    } catch (err) {
+        console.error('캡처 중 오류가 발생했습니다:', err);
     }
+}
 </script>
 
 <header>
@@ -720,8 +731,9 @@ main {
 }
 .in-thumbnail-text :global(.ProseMirror) {
     outline: none;
-    overflow: hidden;
+    overflow: visible;
     overflow-anchor: none;
+    white-space: nowrap;
 }
 .in-thumbnail-text :global(.ProseMirror p) {
     margin: 0;
