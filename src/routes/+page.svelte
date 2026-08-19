@@ -400,6 +400,8 @@
         {/if}
     </div>
 
+    <br>
+
     <!-- 배경 이미지 제어 컨트롤 (툴바 외부) -->
     <div class="bg-image-controls">
         <input 
@@ -420,9 +422,12 @@
             </button>
         {/if}
     </div>
+    <br>
 
     <!-- 정렬 컨트롤 -->
+<div class="position-control">
     <p>텍스트 정렬</p>
+
     <div id="position-select">
         <input type="radio" bind:group={position} value="top-left" />
         <input type="radio" bind:group={position} value="top-center" />
@@ -436,7 +441,9 @@
         <input type="radio" bind:group={position} value="bottom-center" />
         <input type="radio" bind:group={position} value="bottom-right" />
     </div>
+</div>
 
+<br>
     <button type="button" class="download-btn" onclick={downloadThumbnail}>
         섬네일 다운로드
     </button>
@@ -449,298 +456,494 @@
 </footer>
 
 <style>
+:global(*) {
+    box-sizing: border-box;
+}
+
+
+/* ================================
+   Header
+   ================================ */
+
+header {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 1.5rem;
+}
+
+header h1 {
+    margin: 0;
+    letter-spacing: -0.04em;
+}
+
+header p {
+    margin-top: 0.75rem;
+    color: var(--gray);
+    line-height: 1.7;
+}
+
+
+/* ================================
+   Main
+   ================================ */
+
+main {
+    width: min(100%, 820px);
+    padding: 0 1.5rem 3rem;
+}
+
+
+/* ================================
+   Toolbar
+   ================================ */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    width: 100%;
+    padding: 8px;
+
+    background: var(--box-bg-color);
+    border: var(--border);
+    border-radius: var(--border-radius);
+}
+
+
+/* nokull 기본 버튼/입력 스타일을
+   툴바 안에서 조금 작게 */
+
+.toolbar button,
+.toolbar select,
+.custom-font-input {
+    height: 34px;
+    margin: 0;
+
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+
+
+/* 버튼 */
+
+.toolbar button {
+    min-width: 34px;
+    padding: 0 0.7rem;
+}
+
+.toolbar button.active {
+    background: var(--bg-color);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+
+/* select */
+
+.toolbar select {
+    width: auto;
+    padding: 0 2rem 0 0.7rem;
+}
+
+.font-select {
+    max-width: 165px;
+}
+
+.font-size-select {
+    max-width: 125px;
+}
+
+
+/* 직접 입력 */
+
+.custom-font-input {
+    width: 145px !important;
+    padding: 0 0.7rem !important;
+    margin-top: 0 !important;
+}
+
+
+/* ================================
+   Color Picker
+   ================================ */
+
+.color-picker-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    width: 42px;
+    height: 34px;
+    padding: 0;
+
+    background: var(--button-bg-color);
+    border: var(--border);
+    border-radius: var(--border-radius);
+
+    cursor: pointer;
+}
+
+.color-picker-label input[type="color"] {
+    width: 18px;
+    height: 18px;
+
+    padding: 0;
+    margin: 0;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: transparent;
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.color-picker-label input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-picker-label input[type="color"]::-webkit-color-swatch {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+}
+
+
+/* 초기화 버튼 */
+
+.clear-btn {
+    margin-left: auto !important;
+}
+
+
+/* ================================
+   Thumbnail
+   ================================ */
+
+#thumbnail {
+    position: relative;
+
+    width: 100%;
+    aspect-ratio: 16 / 9;
+
+    margin-top: 12px;
+    padding: 2em;
+
+    display: grid;
+    place-items: center;
+    place-content: center;
+
+    overflow: hidden;
+
+    border: 2px solid var(--text-color);
+    border-radius: var(--border-radius);
+
+    background-color: #fff;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+/* Drag & Drop */
+
+#thumbnail.drag-over {
+    border-style: dashed;
+}
+
+.drag-overlay {
+    position: absolute;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(245, 245, 245, 0.85);
+
+    color: var(--text-color);
+
+    font-size: 1.1rem;
+    font-weight: 600;
+
+    pointer-events: none;
+}
+
+
+/* ================================
+   Tiptap
+   ================================ */
+
+.in-thumbnail-text {
+    width: max-content;
+    max-width: 100%;
+    height: max-content;
+
+    color: inherit;
+
+    font-size: 2.5rem;
+}
+
+.in-thumbnail-text :global(.ProseMirror) {
+    outline: none;
+    overflow: hidden;
+    overflow-anchor: none;
+}
+
+.in-thumbnail-text :global(.ProseMirror p) {
+    margin: 0;
+    line-height: 1.2;
+}
+
+
+/* ================================
+   Background Image Controls
+   ================================ */
+
+.bg-image-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    width: 100%;
+    margin-top: 4px;
+}
+
+.hidden-file-input {
+    display: none;
+}
+
+.bg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0.55rem 0.9rem;
+
+    background: var(--button-bg-color);
+    color: var(--text-color);
+
+    border: var(--border);
+    border-radius: var(--border-radius);
+
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.remove-bg-btn {
+    color: var(--text-color);
+}
+
+
+/* ================================
+   Position Selector
+   ================================ */
+
+.position-control {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.position-control > p {
+    margin: 0 0 0.5rem;
+
+    color: var(--gray);
+
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+#position-select {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+
+    width: 100px;
+    height: 100px;
+
+    gap: 4px;
+
+    padding: 4px;
+
+    background: var(--box-bg-color);
+    border: var(--border);
+    border-radius: var(--border-radius);
+}
+
+#position-select input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: auto;
+    height: auto;
+
+    margin: 0;
+
+    background: var(--bg-color);
+    border: var(--border);
+    border-radius: 4px;
+
+    cursor: pointer;
+}
+
+#position-select input[type="radio"]:checked {
+    background: var(--text-color);
+    border-color: var(--text-color);
+}
+
+
+/* ================================
+   Position
+   ================================ */
+
+#thumbnail.top-left {
+    place-content: start start;
+}
+
+#thumbnail.top-center {
+    place-content: start center;
+}
+
+#thumbnail.top-right {
+    place-content: start end;
+}
+
+#thumbnail.center-left {
+    place-content: center start;
+}
+
+#thumbnail.center-center {
+    place-content: center center;
+}
+
+#thumbnail.center-right {
+    place-content: center end;
+}
+
+#thumbnail.bottom-left {
+    place-content: end start;
+}
+
+#thumbnail.bottom-center {
+    place-content: end center;
+}
+
+#thumbnail.bottom-right {
+    place-content: end end;
+}
+
+
+/* ================================
+   Text Alignment
+   ================================ */
+
+#thumbnail.top-left .in-thumbnail-text,
+#thumbnail.center-left .in-thumbnail-text,
+#thumbnail.bottom-left .in-thumbnail-text {
+    text-align: left;
+}
+
+#thumbnail.top-center .in-thumbnail-text,
+#thumbnail.center-center .in-thumbnail-text,
+#thumbnail.bottom-center .in-thumbnail-text {
+    text-align: center;
+}
+
+#thumbnail.top-right .in-thumbnail-text,
+#thumbnail.center-right .in-thumbnail-text,
+#thumbnail.bottom-right .in-thumbnail-text {
+    text-align: right;
+}
+
+
+/* ================================
+   Download
+   ================================ */
+
+.download-btn {
+    width: 100%;
+
+    margin-top: 12px;
+
+    background: var(--button-bg-color);
+    color: var(--text-color);
+
+    border: var(--border);
+    border-bottom: 4px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--border-radius);
+
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.download-btn:hover {
+    background: var(--box-bg-color);
+}
+
+
+/* ================================
+   Footer
+   ================================ */
+
+footer {
+    margin-top: 2rem !important;
+    padding: 4rem 1.5rem !important;
+
+    background: var(--text-color) !important;
+    color: var(--bg-color) !important;
+
+    line-height: 1.8;
+}
+
+
+/* ================================
+   Mobile
+   ================================ */
+
+@media (max-width: 600px) {
+    header {
+        padding-top: 2rem;
+    }
+
     main {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 12px;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 
-    /* 툴바 메인 컨테이너 */
     .toolbar {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 6px;
-        padding: 6px 10px;
-        background: #ffffff;
-        border: 1px solid #e1e4e8;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        gap: 5px;
     }
 
-    /* 공통 버튼 & 선택창 스타일 */
-    .toolbar button, 
-    .toolbar select,
+    .font-select,
+    .font-size-select,
     .custom-font-input {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 34px;
-        padding: 0 10px;
-        border: 1px solid #d1d5db;
-        background: #ffffff;
-        border-radius: 6px;
-        color: #374151;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.15s ease-in-out;
+        flex: 1 1 calc(50% - 5px);
+        width: auto !important;
+        max-width: none;
     }
 
-    .toolbar button:hover, 
-    .toolbar select:hover {
-        background: #f3f4f6;
-        border-color: #9ca3af;
-    }
-
-    .toolbar button:active {
-        transform: translateY(1px);
-    }
-
-    .toolbar button.active {
-        background: #eff6ff;
-        color: #2563eb;
-        border-color: #3b82f6;
-    }
-
-    .font-select {
-        max-width: 160px;
-        outline: none;
-    }
-
-    .custom-font-input {
-        width: 140px;
-        cursor: text;
-        outline: none;
-    }
-    .custom-font-input:focus {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-    }
-
-    .font-size-select {
-        padding-right: 12px;
-        outline: none;
+    .clear-btn {
+        margin-left: 0 !important;
     }
 
     .color-picker-label {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        padding: 0 8px;
-        height: 34px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        background: #ffffff;
-        cursor: pointer;
-        font-size: 0.875rem;
-        transition: all 0.15s ease-in-out;
+        flex: 1;
     }
 
-    .color-picker-label:hover {
-        background: #f3f4f6;
-        border-color: #9ca3af;
-    }
-
-    .color-picker-label input[type="color"] {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        padding: 0;
-        background: none;
-    }
-
-    .color-picker-label input[type="color"]::-webkit-color-swatch-wrapper {
-        padding: 0;
-    }
-
-    .color-picker-label input[type="color"]::-webkit-color-swatch {
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 50%;
-    }
-
-    .thumbnail-bg-label {
-        border-color: #6366f1;
-        background: #f5f3ff;
-    }
-    .thumbnail-bg-label:hover {
-        background: #ede9fe;
-    }
-
-    .clear-btn:hover {
-        background: #fef2f2;
-        border-color: #f87171;
-        color: #ef4444;
-    }
-
-    /* 썸네일 메인 컨테이너 */
     #thumbnail {
-        box-sizing: border-box;
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        padding: 2em;
-        border-radius: 5px;
-        border: 2px solid black;
-
-        display: grid;
-        place-items: center; 
-        place-content: center;
-
-        overflow: hidden; 
-        position: relative;
-
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        transition: border-color 0.2s ease, background-color 0.2s ease;
+        padding: 1.25rem;
     }
 
-    /* 드래그 오버 상태 스타일 */
-    #thumbnail.drag-over {
-        border: 2px dashed #4f46e5;
-    }
-
-    .drag-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(79, 70, 229, 0.2);
-        backdrop-filter: blur(2px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #312e81;
-        font-weight: bold;
-        font-size: 1.25rem;
-        pointer-events: none;
-    }
-
-    /* 배경 이미지 전용 버튼 컨테이너 */
-    .bg-image-controls {
-        display: flex;
-        gap: 8px;
-        margin-top: 4px;
-    }
-
-    .hidden-file-input {
-        display: none;
-    }
-
-    .bg-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 14px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.15s ease-in-out;
-    }
-
-    .add-bg-btn {
-        background-color: #4f46e5;
-        color: white;
-        border: none;
-    }
-
-    .add-bg-btn:hover {
-        background-color: #4338ca;
-    }
-
-    .remove-bg-btn {
-        background-color: #dc2626;
-        color: white;
-        border: none;
-    }
-
-    .remove-bg-btn:hover {
-        background-color: #b91c1c;
-    }
-
-    /* Tiptap 에디터 요소 내부 스타일 설정 */
     .in-thumbnail-text {
-        color: inherit;
-        width: max-content;
-        height: max-content;
-        max-width: 100%;
-        font-size: 2.5rem;
+        font-size: 2rem;
     }
-
-    .in-thumbnail-text :global(.ProseMirror) {
-        outline: none;
-        overflow: hidden;
-        overflow-anchor: none;
-    }
-
-    .in-thumbnail-text :global(.ProseMirror p) {
-        margin: 0;
-        line-height: 1.2;
-    }
-
-    /* 9가지 정렬 위치 설정 */
-    #thumbnail.top-left       { place-content: start start; }
-    #thumbnail.top-center     { place-content: start center; }
-    #thumbnail.top-right      { place-content: start end; }
-
-    #thumbnail.center-left    { place-content: center start; }
-    #thumbnail.center-center  { place-content: center center; }
-    #thumbnail.center-right   { place-content: center end; }
-
-    #thumbnail.bottom-left    { place-content: end start; }
-    #thumbnail.bottom-center  { place-content: end center; }
-    #thumbnail.bottom-right   { place-content: end end; }
-
-    /* 텍스트 내부 정렬 동기화 */
-    #thumbnail.top-left .in-thumbnail-text,
-    #thumbnail.center-left .in-thumbnail-text,
-    #thumbnail.bottom-left .in-thumbnail-text {
-        text-align: left;
-    }
-
-    #thumbnail.top-center .in-thumbnail-text,
-    #thumbnail.center-center .in-thumbnail-text,
-    #thumbnail.bottom-center .in-thumbnail-text {
-        text-align: center;
-    }
-
-    #thumbnail.top-right .in-thumbnail-text,
-    #thumbnail.center-right .in-thumbnail-text,
-    #thumbnail.bottom-right .in-thumbnail-text {
-        text-align: right;
-    }
-
-    #position-select {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(3, 1fr);
-        width: 100px;
-        height: 100px;
-        gap: 4px;
-    }
-
-    .download-btn {
-        padding: 10px 20px;
-        font-size: 1rem;
-        font-weight: bold;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .download-btn:hover {
-        background-color: #218838;
-    }
+}
 </style>
