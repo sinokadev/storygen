@@ -55,6 +55,7 @@
 
     // 날짜 기본값 세팅
     let today = new Date();   
+    today.setDate(today.getDate() + 1);
     let year = today.getFullYear();
 
     // padStart(최종길이, 채울문자) 사용
