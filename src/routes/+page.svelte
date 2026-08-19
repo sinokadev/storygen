@@ -5,7 +5,7 @@
     import { TextStyle } from '@tiptap/extension-text-style';
     import { Color } from '@tiptap/extension-color';
     import { Highlight } from '@tiptap/extension-highlight';
-    import { toPng } from 'html-to-image';
+    import html2canvas from 'html2canvas';
 
     // 1. 커스텀 FontSize Mark Extension 정의
     const FontSize = Mark.create({
@@ -386,33 +386,38 @@
         if (!thumbnailRef) return;
 
         try {
-            const targetWidth = 1920;
-            const targetHeight = 1080;
+            await document.fonts.ready;
 
             const currentWidth = thumbnailRef.offsetWidth;
+            const currentHeight = thumbnailRef.offsetHeight;
 
-            const scale = targetWidth / currentWidth;
+            // 화면의 16:9 레이아웃을 그대로 유지하면서
+            // 최종 결과를 1920x1080으로 렌더링
+            const scale = 1920 / currentWidth;
 
-            const dataUrl = await toPng(thumbnailRef, {
-                cacheBust: true,
-                width: targetWidth,
-                height: targetHeight,
-                canvasWidth: targetWidth,
-                canvasHeight: targetHeight,
+            const canvas = await html2canvas(thumbnailRef, {
+                scale,
+                width: currentWidth,
+                height: currentHeight,
 
-                style: {
-                    transform: `scale(${scale})`,
-                    transformOrigin: 'top left',
-                    width: `${currentWidth}px`,
-                    height: `${thumbnailRef.offsetHeight}px`,
-                    overflow: 'visible'
-                }
+                useCORS: true,
+                backgroundColor: null,
+
+                // 캡처용 clone에서도 현재 화면과 동일한 viewport를 사용
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+
+                logging: false
             });
+
+            const dataUrl = canvas.toDataURL('image/png');
 
             const link = document.createElement('a');
             link.download = `thumbnail-${Date.now()}.png`;
             link.href = dataUrl;
             link.click();
+            link.remove();
+
         } catch (err) {
             console.error('캡처 중 오류가 발생했습니다:', err);
         }
@@ -854,20 +859,25 @@ main {
     pointer-events: none;
 }
 /* ================================
-   Tiptap
+   Tiptap (수정 부분)
    ================================ */
 .in-thumbnail-text {
-    width: max-content;
+    width: fit-content;
     max-width: 100%;
     height: max-content;
     color: inherit;
     font-size: 2.5rem;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 .in-thumbnail-text :global(.ProseMirror) {
     outline: none;
     overflow: visible;
     overflow-anchor: none;
     white-space: pre-wrap;
+    /* 폰트 렌더링 오차 최소화 */
+    text-rendering: geometryPrecision;
+    -webkit-font-smoothing: antialiased;
 }
 .in-thumbnail-text :global(.ProseMirror p) {
     margin: 0;
