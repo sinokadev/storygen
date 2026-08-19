@@ -285,6 +285,13 @@
     }
 </script>
 
+
+  <header>
+    <h1>섬네일 생성기</h1>
+    <p>스토리 서버의 섬네일 공모전에 제출할 섬네일이나 기타 섬네일을 생성할 수 있는 페이지입니다. by <a href="https://sinoka.dev">SinokaDev🧊</a></p>
+    
+  </header>
+
 <main>
     <!-- Tiptap 서식 툴바 -->
     {#if editor}
@@ -437,7 +444,8 @@
 
 <footer>
     이 페이지의 기본 폰트는 Pretendard입니다. 섬네일의 기본 폰트 또한 Pretendard입니다. <br>
-    <a href="https://github.com/orioncactus/pretendard" target="_blank" rel="noreferrer">https://github.com/orioncactus/pretendard</a>
+    <a href="https://github.com/orioncactus/pretendard" target="_blank" rel="noreferrer">https://github.com/orioncactus/pretendard</a> <br>
+    섬네일 생성기 by <a href="https://sinoka.dev">SinokaDev🧊</a>
 </footer>
 
 <style>
@@ -734,11 +742,5 @@
 
     .download-btn:hover {
         background-color: #218838;
-    }
-
-    footer {
-        font-size: 0.85rem;
-        color: #6b7280;
-        margin-top: 16px;
     }
 </style>
